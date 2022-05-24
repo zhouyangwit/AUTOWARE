@@ -6,9 +6,11 @@ import java.io.File;
 public class PictureInformation {
     PictureInformation()
     {
-
+        getEXIF(new File(""));
     }
 
+    /*TODO 找相关的jar包，来获取EXIF信息，将信息封装到一个二维数组中，再构造一个函数来解析这个二维数组
+     */
     public void getEXIF(File image)
     {
 
