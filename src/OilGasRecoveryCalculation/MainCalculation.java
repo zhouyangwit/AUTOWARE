@@ -6,7 +6,7 @@ public class MainCalculation {
     public static void main(String[] args) {
 
         //随便测试一下
-        new MainCalculation().Calculation(300);
+        new MainCalculation().Calculation(220);
     }
 
     public void Calculation(int gasValue)

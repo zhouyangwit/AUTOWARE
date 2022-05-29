@@ -1,11 +1,12 @@
 package MyDiskManager;
 
+import java.awt.*;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 
 public class DatabaseOperation {
     //数据库登录参数默认值
-    final static String ipaddr="192.168.0.101";
+    final static String ipaddr="192.168.0.102";
     final static int port=3306;
     final static String database="MyDiskManager";
     final static String username="zhouyang";
@@ -107,6 +108,21 @@ public class DatabaseOperation {
         return result;
     }
 
+    public boolean addEXIF(ImageKeyword ik)
+    {
+        boolean result=false;
+        String sql="insert into `exif_information` (`md5`,`ImageSize`,`ProductInformation`,`GPS_Longitude`,`GPS_Latitude`,`GPS_Altitude`) VALUES ('"+ik.md5+"','"+(ik.Image_Height+" X "+ik.Image_Width)+"','"+(ik.make+"  "+ik.model)+"','"+ik.GPS_Longitude+"','"+ik.GPS_Latitude+"','"+ik.GPS_Altitude+"')";
+        try {
+            stmt=conn.createStatement();
+            stmt.execute(sql);
+            result=true;
+        } catch (SQLException e) {
+            result=false;
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
     public boolean updateRank(String md5)
     {
         boolean updateStatus=false;
@@ -167,6 +183,14 @@ public class DatabaseOperation {
     public void queryFileName(String filename)
     {
         String sql="select * from `FileInfo` where `filename` like '%"+filename+"%'";
+        ResultSet rs=query(sql);
+        showResultSet(rs);
+        closeDatabase(rs);
+    }
+
+    public void queryName(String keyword)
+    {
+        String sql="select * from `FileInfo` where `path` like '%"+keyword+"%'";
         ResultSet rs=query(sql);
         showResultSet(rs);
         closeDatabase(rs);

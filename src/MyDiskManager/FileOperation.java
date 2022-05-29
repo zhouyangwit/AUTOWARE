@@ -11,7 +11,7 @@ public class FileOperation {
     }
 
     DatabaseOperation database = new DatabaseOperation();
-    boolean isDeleteFile=false;
+    boolean isDeleteFile=true;
     FileOperation()
     {
         if(isDeleteFile)
