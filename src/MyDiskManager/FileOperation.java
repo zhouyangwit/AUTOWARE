@@ -3,15 +3,24 @@ package MyDiskManager;
 import javax.swing.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-
+import java.util.Date;
 public class FileOperation {
+    private DatabaseOperation database = new DatabaseOperation();   //建立数据库连接
+    private boolean isDeleteFile = true;    //文件保护模式，为true时，会删除重复文件，为false时，只记录扫面文件信息，不执行删除操作
+    private int lastRecordNum = 0;  //当程序执行被打断时，将上一次执行的最终[currentFileNo-deleteFileNum]差值赋值给他即可继续扫描
+    private String defaltScanFolder="D:\\UserData\\Downloads\\ZIG";   //默认要扫描的目录
+
+    private int TotalFileNum = 0;   //用于统计系统需要扫描的文件总数，初始值为0，不要修改
+    private int currentFileNo = 0;  //用于统计系统扫描进度的数据，初始值为0，不要修改
+    private int successFileNum = 0; //用于统计系统扫描成功并录入的数量，初始值为0，不要修改
+    private int deleteFileNum = 0;  //用于统计系统删除文件的数量，初始值为0，不要修改
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //用于标准化时间格式
+    private NameSpace ns = new NameSpace();
 
     public static void main(String[] args) {
         new FileOperation();
     }
 
-    DatabaseOperation database = new DatabaseOperation();
-    boolean isDeleteFile=true;
     FileOperation()
     {
         if(isDeleteFile)
@@ -25,16 +34,6 @@ public class FileOperation {
         isDirectory(startFile);
         database.closeDatabase();
     }
-
-
-    int TotalFileNum=0;
-    int currentFileNo=0;
-    int successFileNum=0;
-    int deleteFileNum=0;
-    int lastRecordNum=0;
-
-    SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    NameSpace ns=new NameSpace();
 
     public void getTotalFileNum(File file)
     {
@@ -63,7 +62,7 @@ public class FileOperation {
             else if(fl[i].isFile())
             {
                 currentFileNo++;
-                if(currentFileNo>=lastRecordNum)
+                if(currentFileNo>lastRecordNum)
                 {
                     isFile(fl[i],isDeleteFile);
                 }
@@ -79,6 +78,7 @@ public class FileOperation {
         ns.path=(file.getAbsolutePath()).replace("\\","\\\\").replace("'","’").replace("\"","");
         ns.hashcode=file.hashCode();
         ns.md5=new FileInformation().getMD5(file);
+        ns.recordtime=sdf.format(new Date());
         ns.rank=0;
         if(!database.queryMD5(ns.md5))
         {
@@ -111,6 +111,8 @@ public class FileOperation {
     {
         File file=null;
         JFileChooser jfc=new JFileChooser();
+        String defaultPath = defaltScanFolder;    //这里为默认扫描的文件地址
+        jfc.setCurrentDirectory(new File(defaultPath));
         jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         jfc.showDialog(new JLabel(), "choose");
         file=jfc.getSelectedFile();
@@ -126,5 +128,4 @@ public class FileOperation {
         file = jfc.getSelectedFile();
         return file;
     }
-
 }

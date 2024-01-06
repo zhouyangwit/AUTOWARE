@@ -6,44 +6,36 @@ import java.text.SimpleDateFormat;
 
 public class DatabaseOperation {
     //数据库登录参数默认值
-    final static String ipaddr="192.168.0.102";
-    final static int port=3306;
-    final static String database="MyDiskManager";
-    final static String username="zhouyang";
-    final static String password="zhouyang@2021";
+    private final String ipaddr = "100.68.1.169";
+    private final int port = 3306;
+    private final String database = "MyDiskManager";
+    private final String username = "zhouyang";
+    private final String password = "Zy@19930207";
 
-    //考虑到反复申请数据库连接效率会很低，故连接上数据库后，主要是循环使用stmt和rs，conn建议保持常开
-    Connection conn=null;
-    Statement stmt=null;
-    ResultSet rs=null;
+    private Connection conn;
+    private Statement stmt;
+    private ResultSet rs;
     boolean connectionState=false;
 
     SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
-    DatabaseOperation()
-    {
-        conn=getConnect(ipaddr,port,database,username,password);
+    public DatabaseOperation() {
+        conn = getConnect();
         try {
-            stmt=conn.createStatement();
+            stmt = conn.createStatement();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error creating statement", e);
         }
-
     }
 
-    private Connection getConnect()
-    {
-        Connection conn=null;
-
+    private Connection getConnect() {
+        Connection conn = null;
+        String url = "jdbc:mysql://" + ipaddr + ":" + port + "/" + database + "?autoReconnect=true";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            try {
-                conn= DriverManager.getConnection("jdbc:mysql://"+ipaddr+":"+port+"/"+database,username,password);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            conn = DriverManager.getConnection(url, username, password);
+        } catch (ClassNotFoundException | SQLException e) {
+            throw new RuntimeException("Error connecting to the database", e);
         }
         return conn;
     }
@@ -75,35 +67,37 @@ public class DatabaseOperation {
     }
 
     //查询MD5值，查询到返回true，查询不到返回false
-    public boolean queryMD5(String md5)
-    {
-        boolean result=false;
-        String sql="select * from FileInfo where md5='"+md5+"'";
-        try {
-            stmt=conn.createStatement();
-            rs=stmt.executeQuery(sql);
-            if(rs.next())
-            {
-                result=true;
-            }
+    public boolean queryMD5(String md5) {
+        boolean result = false;
+        String sql = "SELECT * FROM FileInfo WHERE md5 = ?";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, md5);
+            rs = preparedStatement.executeQuery();
+            result = rs.next();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing MD5 query", e);
+        } finally {
+            closeResultSet();
         }
-        closeDatabase(rs);
         return result;
     }
 
-    public boolean insert(NameSpace ns)
-    {
-        String sql="insert into `FileInfo` (`filename`,`length`,`hashcode`,`md5`,`lastmodified`,`path`,`rank`) values ('"+ns.filename+"',"+ns.length+","+ns.hashcode+",'"+ns.md5+"','"+ns.lastmodified+"',\""+ns.path+"\","+ns.rank+")";
-        boolean result=false;
-        try {
-            stmt=conn.createStatement();
-            stmt.execute(sql);
-            result=true;
+    public boolean insert(NameSpace ns) {
+        boolean result = false;
+        String sql = "INSERT INTO FileInfo (`filename`, `length`, `hashcode`, `md5`, `lastmodified`, `recordtime`, `path`, `rank`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, ns.filename);
+            preparedStatement.setLong(2, ns.length);
+            preparedStatement.setLong(3, ns.hashcode);
+            preparedStatement.setString(4, ns.md5);
+            preparedStatement.setString(5, ns.lastmodified);
+            preparedStatement.setString(6, ns.recordtime);
+            preparedStatement.setString(7, ns.path);
+            preparedStatement.setInt(8, ns.rank);
+            preparedStatement.executeUpdate();
+            result = true;
         } catch (SQLException e) {
-            System.out.println(sql);
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing insert statement", e);
         }
         return result;
     }
@@ -123,52 +117,44 @@ public class DatabaseOperation {
         return result;
     }
 
-    public boolean updateRank(String md5)
-    {
-        boolean updateStatus=false;
-        String sql="update `FileInfo` set `rank`=`rank`+1 where md5='"+md5+"'";
-        try {
-            stmt=conn.createStatement();
-            stmt.executeUpdate(sql);
-            updateStatus=true;
+    public boolean updateRank(String md5) {
+        boolean updateStatus = false;
+        String sql = "UPDATE FileInfo SET `rank` = `rank` + 1 WHERE `md5` = ?";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, md5);
+            preparedStatement.executeUpdate();
+            updateStatus = true;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing update statement", e);
         }
         return updateStatus;
-
     }
 
-    //程序操作完毕，释放数据库连接
-    private void closeDatabase(Connection conn,Statement stmt,ResultSet rs)
-    {
-        try {
-            rs.close();
-            stmt.close();
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void closeDatabase()
-    {
+    private void closeResultSet() {
         try {
             if (rs != null) {
                 rs.close();
             }
-            if(stmt!=null)
-            {
+        } catch (SQLException e) {
+            // 记录日志
+            e.printStackTrace();
+        }
+    }
+    //程序操作完毕，释放数据库连接
+    public void closeDatabase() {
+        closeResultSet();
+        try {
+            if (stmt != null) {
                 stmt.close();
             }
-            if(conn!=null)
-            {
+            if (conn != null) {
                 conn.close();
             }
-        }catch (SQLException e) {
-            throw new RuntimeException(e);
-            }
+        } catch (SQLException e) {
+            // 记录日志
+            e.printStackTrace();
+        }
     }
-
 
     //实时释放ResultSet
     private void closeDatabase(ResultSet rs)
@@ -198,10 +184,10 @@ public class DatabaseOperation {
 
     public void showResultSet(ResultSet rs)
     {
- //       String result="";
+        //       String result="";
         try {
             while (rs.next()) {
-            //    System.out.print(rs.getString("filename")+"\t");
+                //    System.out.print(rs.getString("filename")+"\t");
                 System.out.print(rs.getString("length")+"\t");
                 System.out.print(rs.getString("lastmodified")+"\t");
                 System.out.print(rs.getString("hashcode")+"\t");
@@ -210,8 +196,8 @@ public class DatabaseOperation {
                 System.out.print(rs.getString("path")+"\n");
             }
         }catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            throw new RuntimeException(e);
+        }
 
     }
 
