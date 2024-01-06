@@ -7,6 +7,7 @@ public class NameSpace {
 
     String filename;
     String lastmodified;
+    String recordtime;
     long length;
     long hashcode;
     String md5;
@@ -22,6 +23,7 @@ public class NameSpace {
     {
       filename="";
       lastmodified="";
+      recordtime="";
       length=0;
       hashcode=0;
       md5="";

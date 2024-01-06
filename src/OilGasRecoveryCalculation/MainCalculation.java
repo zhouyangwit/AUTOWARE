@@ -6,7 +6,7 @@ public class MainCalculation {
     public static void main(String[] args) {
 
         //随便测试一下
-        new MainCalculation().Calculation(220);
+        new MainCalculation().Calculation(300);
     }
 
     public void Calculation(int gasValue)
@@ -24,6 +24,7 @@ public class MainCalculation {
         int dn=0;
         double dn_cal=0;
         dn_cal=Math.sqrt(gas*4.0/3.141592654/3600.0/gas_speed)*1000;
+        System.out.println("计算出来的管径为："+dn_cal+"mm");
         if(dn_cal<=50)
         {
             dn=50;

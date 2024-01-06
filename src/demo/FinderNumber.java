@@ -5,19 +5,34 @@ public class FinderNumber {
         new FinderNumber();
     }
     FinderNumber(){
-        getStart(10000);
-    //    common_divisor(333,666,999);
+       CalculationXYZMin2MAX(100,200);
     }
 
     int prime_num=0;
-    public void getStart(int MAX_NUM)
+
+    public void CalculationZfromMin2Max(int MIN_NUM,int MAX_NUM)
     {
         int x,y,z;
-        for(z=5;z<=MAX_NUM;z++)
+        for(z=MIN_NUM;z<=MAX_NUM;z++)
         {
             for(y=z;y>0;y--)
             {
                 for(x=y;x>0;x--)
+                {
+                    isPrime(x,y,z);
+                }
+            }
+        }
+    }
+
+    public void CalculationXYZMin2MAX(int MIN_NUM,int MAX_NUM)
+    {
+        int x,y,z;
+        for(z=MIN_NUM;z<=MAX_NUM;z++)
+        {
+            for(y=z;y>MIN_NUM;y--)
+            {
+                for(x=y;x>MIN_NUM;x--)
                 {
                     isPrime(x,y,z);
                 }
